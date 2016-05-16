@@ -1,5 +1,5 @@
 data Tree a = EmptyTree | Node a (Tree a) (Tree a) 
- deriving (Show, Read, Eq)  
+ --deriving (Show, Read, Eq)  
 -------------------------------------------------------------------------
  
 singleton :: a -> Tree a  
@@ -152,6 +152,58 @@ treeRemove x tree@(Node val left right)
  | x == val = treeRemoveRoot (searchSubtreeWithRoot x tree)
  | x <  val = Node val (treeRemove x left) right
  | x >  val = Node val left (treeRemove x right)
+
+
+ --------------------------------------------------------------------------
+getLevel EmptyTree _ = []
+
+getLevel (Node val left right)  1  = [val]  
+
+getLevel (Node val left right)  level = 
+ getLevel left (level -1) ++ getLevel right (level-1)
+
+ ---------------------------------------------------------------------
+makeLayoutFinal tree  = 
+ foldl ( \acc x -> (length acc + 1, snd x, fst x):acc) [] (makeLayout tree 1) 
+
+makeLayout EmptyTree _ = []
+
+makeLayout (Node val left right) depth = 
+ makeLayout left (depth +1) ++ [(val,depth)] ++ makeLayout right (depth +1)
+
+
+-------------------------------------------------------------------------
+getSubroot EmptyTree = ""
+
+getSubroot (Node val _ _ ) = show val
+
+dumpNODE EmptyTree = ""
+
+dumpNODE tree@(Node val left right) =
+ getSubroot tree  ++ " -> " ++ getSubroot left ++ "\n" 
+ ++  getSubroot tree  ++ " -> " ++ getSubroot right ++ "\n" 
+ ++ dumpNODE left 
+ ++ dumpNODE right
+
+ ----------------------------------------------------------------------
+
+
+
+instance Show a => Show (Tree a)  where
+ show EmptyTree = " - "
+ show (Node val left right) = 
+  "( " ++ (show left) ++ " " ++ (show val) ++ " " ++  (show right) ++ " )"
+
+-----------------------------------------------------------------------------
+
+data  STree a = SEmpty | SLeaf a | SBranch a (STree a) (STree a)
+ deriving Show
+
+convertStree EmptyTree = SEmpty 
+convertStree (Node val EmptyTree EmptyTree) = SLeaf val
+convertStree (Node val left right) = SBranch val (convertStree left) (convertStree right)
+
+
 
 
 
