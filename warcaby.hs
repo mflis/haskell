@@ -1,10 +1,14 @@
 import Debug.Trace
 import Data.Maybe
+import Data.Tree
+
 
 data Field = White | WhiteQueen | Black | BlackQueen | Empty 
  deriving (Show, Eq)
 
 data Board = Board [[ Maybe Field]] deriving Show
+
+type Position = (Int,Int)
 
 readField char 
  | char == 'b' = Just Black
@@ -35,7 +39,7 @@ getLegalPositions rows =
 
 
 
-getFigureAtPosition ::   Board ->  (Int,Int) -> Maybe Field
+getFigureAtPosition ::   Board ->  Position -> Maybe Field
 getFigureAtPosition board@(Board listOfLists)  position@(x,y) 
  | 0 < x &&  x <= length listOfLists && 0 < y 
    && y <= length listOfLists  = (listOfLists !! (y-1)) !! (x-1)
@@ -43,28 +47,24 @@ getFigureAtPosition board@(Board listOfLists)  position@(x,y)
 
 
 
---changeFigureInLine :: Int ->  [Field] -> Field -> [Field]
+changeFigureInLine :: Int ->  [Maybe Field] -> Maybe Field -> [Maybe Field]
 changeFigureInLine positionInLine line newFigure =  
  let (firstPart,secondPart) = splitAt positionInLine  line   
  in   (trimLastElement firstPart) ++ [newFigure] ++ secondPart
 
 --workaround because init on empty list throws exception
+trimLastElement:: [a] -> [a]
 trimLastElement [] = []
 trimLastElement list = init list 
 
---changeFigureInPosition :: (Int,Int) -> Field -> Board -> Board
+changeFigureInPosition :: Position -> Maybe Field -> Board -> Board
 changeFigureInPosition  position@(x,y) newFigure (Board listOfLists) = 
  let (firstPart,secondPart) = splitAt y listOfLists   in    
  Board((trimLastElement firstPart) ++ [changedLine]  ++ secondPart)
  where changedLine =  changeFigureInLine x (listOfLists !! (y-1)) newFigure
 
 
-changeFigureInPos  position@(x,y) newFigure ( listOfLists) = 
- let (firstPart,secondPart) = splitAt y listOfLists   in   
- (trimLastElement firstPart) ++ [changedLine]  ++ secondPart
- where changedLine = changeFigureInLine x (listOfLists !! (y-1)) newFigure
-
-
+moveFigure :: Position -> Position -> Board -> Board
 moveFigure oldPosition newPosition board = 
  let removedOldPosition = changeFigureInPosition oldPosition (Just Empty) board
  in  changeFigureInPosition newPosition oldFigure removedOldPosition
@@ -88,22 +88,20 @@ getPosition  board@(Board listOfLists)  position@(x,y)
  | otherwise = Nothing
 
 
-----getMovesForBlack::Board ->(Int,Int)  -> [Maybe(Int,Int)]
---getMovesForBlack board position@(x,y)  =
--- filter ( \x ->  (x /= Black) and (x /= BlackQueen) ) . map (getFigureAtPosition board) .  map (fromJust) filteredFromNothing  
--- where filteredFromNothing = filter (/=Nothing ) $ map (getPosition board) [(x+1,y+1),(x-1,y+1)] 
+ 
 
 
---getMovesForBlack::Board ->(Int,Int)  -> [(Int,Int)]
+getMovesForBlack::Board ->(Int,Int)  -> [(Int,Int)]
 getMovesForBlack board position@(x,y)  =
-   filter (isNonBlack board) . map fromJust . filter (/=Nothing) $ map (getPosition board) [(x+1,y+1),(x-1,y+1)] 
+   filter (isNonBlack board) . map fromJust .
+   filter (/=Nothing) $ map (getPosition board) [(x+1,y+1),(x-1,y+1)] 
 
-
+isNonBlack :: Board -> Position -> Bool
 isNonBlack board position =
  (figure /= Just Black) && (figure /= Just BlackQueen)
  where  figure =getFigureAtPosition board position 
 
-
+isEmpty :: Board -> Position -> Bool
 isEmpty board position =
  figure == Just Empty
  where  figure =getFigureAtPosition board position 
@@ -113,20 +111,45 @@ isEmpty board position =
 -- map (getPosition board) [(x+1,y-1),(x-1,y-1)]
 
 
---getRecursiveListOfPossibleCapturesBlack board listOfPossibleCaptures =
  
-
+-- list of positions after capturing white figure (only one move forward)
+getPossibleCapturesForBlack :: Board -> Position -> [Position]
 getPossibleCapturesForBlack board position =
- map (getPositionAfterCapture position) whiteFields
+ filter (isEmpty board) $ map (getPositionAfterCapture position) whiteFields
  where whiteFields =  filter (\x -> not $ isEmpty board x) $ getMovesForBlack board position 
 
+getPositionAfterCapture :: Position -> Position -> Position
 getPositionAfterCapture startPoint@(xSt,ySt) positionToCapture@(xCap,yCap) =
  (2*xCap - xSt,2*yCap - ySt)
+ 
+getAllPathsInTree :: Tree a -> [[a]]
+getAllPathsInTree (Node label []) = [[label]]
+getAllPathsInTree (Node label xs) = map (label:) $ concat $ map getAllPathsInTree xs
+
+getListOfLongestCaptureSequencesForBlack :: Board -> (Int,Int) -> [[(Int,Int)]]
+getListOfLongestCaptureSequencesForBlack board position  
+  | maxLengthOfSequence == 1 = [] -- there is only one sequence containing only starting point so there are no capture sequences
+  | otherwise =  filter (\x -> (length x) == maxLengthOfSequence) listOfPossibleCaptureSequences 
+   where
+    treeOfCaptures = unfoldTree (\pos -> (pos, getPossibleCapturesForBlack board pos)) position
+    listOfPossibleCaptureSequences = getAllPathsInTree treeOfCaptures
+    maxLengthOfSequence = maximum $ map length listOfPossibleCaptureSequences
+
+-- returns only the longest sequences of moves
+getLegalMoveSequencesForBlack :: Board -> (Int,Int) -> [[(Int,Int)]]
+getLegalMoveSequencesForBlack board position  
+ | captureSequnces == [] = movesOnEmptyFields
+ | otherwise = captureSequnces
+  where
+   movesOnEmptyFields = map (: []) $ filter (isEmpty board) $ getMovesForBlack board position
+   captureSequnces = getListOfLongestCaptureSequencesForBlack board position
  
 
 -----------------------------------UNIT TESTS -----------------
 
 initialBoardStr = ".b.b.b.b\nb.b.b.b.\n.b.b.b.b\n........\n........\nw.w.w.w.\n.w.w.w.w\nw.w.w.w."
+multiCaptureBlack41Str = ".b.b.b.b\nb.w.w.b.\n........\n..w.....\n........\nw.w.w.w.\n.w.w.w.w\nw.w.w.w."
+multiCaptureBlack41 = makeBoardFromString multiCaptureBlack41Str
 init2Board = makeBoardFromString ".b.b\nb.b.\n.b.b"
 
 initBoard = makeBoardFromString initialBoardStr
