@@ -9,7 +9,7 @@ makeCapture,
 getPosition,
 getPositionAfterCapture,
 makeBoardFromString
-	)
+)
 where
 
 

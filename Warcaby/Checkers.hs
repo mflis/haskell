@@ -1,3 +1,14 @@
+module Checkers(
+getLegalMoveSequencesForFigure,
+getLegalPositions,
+PossibleMove,
+initBoard,
+minBoard,
+multiBlackQueenCapture44
+)
+where
+
+
 import Debug.Trace
 import Data.Tree
 import Data.Maybe
@@ -7,7 +18,7 @@ import Board
 type PossibleMove = (Position,Board)
 
 getLegalPositions rows = 
- [(c, d) | c <- [1..8], d <- rows, or [and [even c, even d], and [odd c, odd d]] ]
+ [(c, d) | c <- [1..8], d <- rows, or [and [odd c, even d], and [even c, odd d]] ]
 
 getMovesForFigure::Board -> Position -> Maybe Field -> [Position]
 getMovesForFigure board position@(x,y) figure  =
@@ -75,11 +86,18 @@ getLegalMoveSequencesForFigure board position
    movesOnEmptyFields = map (\pos -> (pos,moveFigure position pos board): []) $
                        filter (isEmpty board) $ getMovesForFigure board position figure
    captureSequnces = getListOfLongestCaptureSequencesForFigure board position figure
- 
+
+
+
+
+
 -----------------------------------TEST CASES -----------------
 
 initialBoardStr = "-b-b-b-b\nb-b-b-b-\n-b-b-b-b\n--------\n--------\nw-w-w-w-\n-w-w-w-w\nw-w-w-w-"
 initBoard = makeBoardFromString initialBoardStr
+
+minBoardStr =     "----b---\n--------\n--------\n--------\n---w----\n--------\n--------\n--------"
+minBoard = makeBoardFromString minBoardStr
 
 multiCaptureBlack41Str = "-b-b-b-b\nb-w-w-b-\n--------\n--w-----\n--------\nw-w-w-w-\n-w-w-w-w\nw-w-w-w-"
 multiCaptureBlack41 = makeBoardFromString multiCaptureBlack41Str
