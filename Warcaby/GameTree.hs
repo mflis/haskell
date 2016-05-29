@@ -1,11 +1,31 @@
+module GameTree(
+GameTreeNode(GameTreeNode),
+generateGameTree
+)where
+
+
 import Board
 import Checkers
 import Data.Tree
 
 type Depth = Int
+type Evaluation = Int
+
+
+
 
 -- (how many levels of tree to generate left, is Current Player Black, board
 data GameTreeNode = GameTreeNode (Depth,Bool,Board) deriving Show
+
+
+--instance Eq GameTreeNode where
+--  (GameTreeNode (_,_,_,evalutaion1)) ==  (GameTreeNode ( _, _, _, evalutaion2)) = evalutaion1 == evalutaion2
+
+
+--instance Ord GameTreeNode where
+--  (GameTreeNode( _, _, _, evalutaion1)) `compare` (GameTreeNode( _, _, _, evalutaion2)) = evalutaion1 `compare` evalutaion2
+
+
 
 getAllMoveSequncesForColor :: Board -> Bool -> [[PossibleMove]]
 getAllMoveSequncesForColor board isBlack =
@@ -39,7 +59,7 @@ onlyLognest listOfLists =
 generateGameTreeNodes :: GameTreeNode -> [GameTreeNode]
 generateGameTreeNodes (GameTreeNode (howManyLevelsLeft,isBlack,board)) 
  | howManyLevelsLeft == 0 = []
- | otherwise = map  ( \board -> GameTreeNode(depthToGo,oppositeColor,board)) finalBoards
+ | otherwise = map  ( \board -> GameTreeNode(depthToGo,oppositeColor,board)) finalBoards 
  where
   depthToGo = howManyLevelsLeft -1
   possibleSequnces  = getAllMoveSequncesForColor board isBlack

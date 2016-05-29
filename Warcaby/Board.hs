@@ -1,7 +1,7 @@
 
 module Board(
 Field(White,WhiteQueen,Black,BlackQueen,Empty),
-Board,
+Board(Board),
 Position,
 getFigureAtPosition,
 moveFigure,
