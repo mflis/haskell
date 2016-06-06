@@ -34,6 +34,39 @@ getMovesForFigure board position@(x,y) figure  =
    | otherwise =   [(x+1,y-1),(x-1,y-1),(x+1,y+1),(x-1,y+1)] -- white or black Queen
 
 
+--getMovesOnEmptyFields :: Board -> Position -> Maybe Field -> [Position]
+--getMovesOnEmptyFields board position (Just Black) = [(x+1,y+1),(x-1,y+1)] 
+--getMovesOnEmptyFields board position (Just White) = [(x+1,y-1),(x-1,y-1)]
+--getMovesOnEmptyFields board position queen = [(x+1,y-1),(x-1,y-1)]
+
+-- list of positions after capturing  figure opposite color (only one move forward)
+getPossibleCapturesForQueen :: PossibleMove -> Maybe Field  ->  [PossibleMove]
+getPossibleCapturesForQueen move@(position,board) figure =
+  map  (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board)) positionsToCapture
+  where
+   positionsToCapture =   map ( !! 0 ) thereIsCapture
+   thereIsCapture = filter (isCapture figure) possibilityOfCapture 
+   possibilityOfCapture = filter  (\list -> (length list) > 1 ) $ map  dropWhileEmpty rawListOfLists 
+   rawListOfLists =  map (getDiagonalInDirection board position) [NorthEast,NorthWest,SouthEast,SouthWest]
+   dropWhileEmpty = dropWhile (\pos -> (getFigureAtPosition board pos) == Just Empty )
+   isCapture  (Just WhiteQueen) possibleCapture  = (isBlack board (possibleCapture !! 0)) && (isEmpty board (possibleCapture !! 1))  
+   isCapture  (Just BlackQueen) possibleCapture  = (isWhite board (possibleCapture !! 0)) && (isEmpty board (possibleCapture !! 1))  
+
+
+isBlack:: Board -> Position -> Bool
+isBlack board position = 
+ (fig == Just Black) || (fig == Just BlackQueen)
+  where
+  fig = getFigureAtPosition board position
+ 
+
+isWhite:: Board -> Position -> Bool
+isWhite board position = 
+ (fig == Just White) || (fig == Just WhiteQueen)
+  where
+  fig = getFigureAtPosition board position
+ 
+
 isNonBlack :: Board -> Position -> Bool
 isNonBlack board position =
  (figure /= Just Black) && (figure /= Just BlackQueen)
@@ -52,7 +85,7 @@ isEmpty board position =
  figure == Just Empty
  where  figure =getFigureAtPosition board position 
 
--- list of positions after capturing white figure (only one move forward)
+-- list of positions after capturing  figure opposite color (only one move forward)
 getPossibleCapturesForFigure :: PossibleMove -> Maybe Field -> [PossibleMove]
 getPossibleCapturesForFigure move@(position,board) figure =
  listOfPossibleMoves
@@ -60,6 +93,9 @@ getPossibleCapturesForFigure move@(position,board) figure =
   filedsWithOppositeColor =  filter (\x -> not $ isEmpty board x) $ getMovesForFigure board position figure
   listOfPositionsToCapture = filter (\pos -> isEmpty board $ getPositionAfterCapture position pos)  filedsWithOppositeColor
   listOfPossibleMoves = map (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board)) listOfPositionsToCapture
+
+
+  
 
 
 getAllPathsInTree :: Tree a -> [[a]]
@@ -108,3 +144,7 @@ multiBlackQueenCapture44Str = "\n--------\n--------\n--------\n---B----\n--w-w--
 multiBlackQueenCapture44 = makeBoardFromString multiBlackQueenCapture44Str
 
 initialBoardCapture23 = "-b-b-b-b\nb-b-b-b-\n-b-b-b-b\n--w-----\n--------\nw-w-w-w-\n---w-w-w\nw-w-w-w-"
+
+
+capturesForBlackQueenStr =  "--------\n--------\n---W----\n--------\n-B------\n--w-----\n--------\n--------"
+capturesForBlackQueen = makeBoardFromString capturesForBlackQueenStr

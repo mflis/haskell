@@ -8,7 +8,10 @@ moveFigure,
 makeCapture,
 getPosition,
 getPositionAfterCapture,
-makeBoardFromString
+makeBoardFromString,
+getDiagonalInDirection,
+getEmptyMovesForQueen,
+Direction(NorthEast,NorthWest,SouthEast,SouthWest)
 )
 where
 
@@ -23,7 +26,7 @@ data Board = Board [[ Maybe Field]] deriving (Eq)
 
 type Position = (Int,Int)
 
-
+data Direction = NorthEast | NorthWest | SouthEast | SouthWest
 
 readField :: Char -> Maybe Field
 
@@ -89,6 +92,21 @@ changeFigureInPosition  position@(x,y) newFigure (Board listOfLists) =
  where changedLine =  changeFigureInLine x (listOfLists !! (y-1)) newFigure
 
 
+--upgradeIfPossible :: Position -> Position ->Board -> Board
+--upgradeIfPossible oldPosition newPosition oldBoard newBoard
+-- | oldFigure == Just Black 
+--where
+-- oldFigure = getFigureAtPosition oldPosition oldBoard
+
+
+--isBlackQueenPosition :: Position -> Bool
+--isBlackQueenPosition position = 
+ 
+--  where
+--  rowNumber = snd position
+
+
+
 moveFigure :: Position -> Position -> Board -> Board
 moveFigure oldPosition newPosition board = 
  let removedOldPosition = changeFigureInPosition oldPosition (Just Empty) board
@@ -120,5 +138,25 @@ getPositionAfterCapture startPoint@(xSt,ySt) positionToCapture@(xCap,yCap) =
  where
   changeX = signum (xCap - xSt)
   changeY = signum (yCap - ySt)
+
+
+getDiagonalInDirection :: Board ->  Position -> Direction -> [Position]
+getDiagonalInDirection board  centerPoint@(x_pos,y_pos) direction =
+ filter (\pos -> isJust $ getPosition board pos) $ rawList direction 
+ where
+  rawList NorthEast = [(x_pos + inc,y_pos - inc) | inc <-[1..7]] 
+  rawList NorthWest = [(x_pos - inc,y_pos - inc) | inc <-[1..7]] 
+  rawList SouthEast = [(x_pos + inc,y_pos + inc) | inc <-[1..7]] 
+  rawList SouthWest = [(x_pos - inc,y_pos + inc) | inc <-[1..7]] 
+
+
+
+getEmptyMovesForQueen:: Board -> Position -> [[Position]]
+getEmptyMovesForQueen board position =
+ filter  (not . null) $ map  takeWhileEmpty rawListOfLists
+  where 
+   rawListOfLists =  map (getDiagonalInDirection board position) [NorthEast,NorthWest,SouthEast,SouthWest]
+   takeWhileEmpty = takeWhile (\pos -> (getFigureAtPosition board pos) == Just Empty )
+ 
 
 
