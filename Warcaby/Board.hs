@@ -10,7 +10,12 @@ getPosition,
 getPositionAfterCapture,
 makeBoardFromString,
 getDiagonalInDirection,
-getEmptyMovesForQueen,
+isEmpty,
+isBlack,
+isWhite,
+isNonBlack,
+isNonWhite,
+changeFigureInPosition,
 Direction(NorthEast,NorthWest,SouthEast,SouthWest)
 )
 where
@@ -151,12 +156,37 @@ getDiagonalInDirection board  centerPoint@(x_pos,y_pos) direction =
 
 
 
-getEmptyMovesForQueen:: Board -> Position -> [[Position]]
-getEmptyMovesForQueen board position =
- filter  (not . null) $ map  takeWhileEmpty rawListOfLists
-  where 
-   rawListOfLists =  map (getDiagonalInDirection board position) [NorthEast,NorthWest,SouthEast,SouthWest]
-   takeWhileEmpty = takeWhile (\pos -> (getFigureAtPosition board pos) == Just Empty )
+isBlack:: Board -> Position -> Bool
+isBlack board position = 
+ (fig == Just Black) || (fig == Just BlackQueen)
+  where
+  fig = getFigureAtPosition board position
  
+
+isWhite:: Board -> Position -> Bool
+isWhite board position = 
+ (fig == Just White) || (fig == Just WhiteQueen)
+  where
+  fig = getFigureAtPosition board position
+ 
+
+isNonBlack :: Board -> Position -> Bool
+isNonBlack board position =
+ (figure /= Just Black) && (figure /= Just BlackQueen)
+ where
+  figure = getFigureAtPosition board position
+ 
+isNonWhite :: Board -> Position -> Bool
+isNonWhite board position = 
+ (figure /= Just Black) && (figure /= Just BlackQueen)
+  where  
+   figure = getFigureAtPosition board position
+
+
+isEmpty :: Board -> Position -> Bool
+isEmpty board position =
+ figure == Just Empty
+ where  figure =getFigureAtPosition board position 
+
 
 

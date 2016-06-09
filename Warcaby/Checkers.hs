@@ -2,6 +2,7 @@ module Checkers(
 getLegalMoveSequencesForFigure,
 getLegalPositions,
 PossibleMove,
+TypeOfMove(Start,Capture,Move),
 initBoard,
 minBoard,
 multiBlackQueenCapture44
@@ -14,8 +15,10 @@ import Data.Tree
 import Data.Maybe
 import Board
 
+data TypeOfMove = Move | Capture | Start deriving Eq
+
 -- positions od possible move with board after making that move
-type PossibleMove = (Position,Board)
+type PossibleMove = (Position,Board,TypeOfMove)
 
 getLegalPositions rows = 
  [(c, d) | c <- [1..8], d <- rows, or [and [odd c, even d], and [even c, odd d]] ]
@@ -34,15 +37,11 @@ getMovesForFigure board position@(x,y) figure  =
    | otherwise =   [(x+1,y-1),(x-1,y-1),(x+1,y+1),(x-1,y+1)] -- white or black Queen
 
 
---getMovesOnEmptyFields :: Board -> Position -> Maybe Field -> [Position]
---getMovesOnEmptyFields board position (Just Black) = [(x+1,y+1),(x-1,y+1)] 
---getMovesOnEmptyFields board position (Just White) = [(x+1,y-1),(x-1,y-1)]
---getMovesOnEmptyFields board position queen = [(x+1,y-1),(x-1,y-1)]
 
 -- list of positions after capturing  figure opposite color (only one move forward)
 getPossibleCapturesForQueen :: PossibleMove -> Maybe Field  ->  [PossibleMove]
-getPossibleCapturesForQueen move@(position,board) figure =
-  map  (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board)) positionsToCapture
+getPossibleCapturesForQueen move@(position,board,_) figure =
+  map  (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board,Capture)) positionsToCapture
   where
    positionsToCapture =   map ( !! 0 ) thereIsCapture
    thereIsCapture = filter (isCapture figure) possibilityOfCapture 
@@ -52,47 +51,44 @@ getPossibleCapturesForQueen move@(position,board) figure =
    isCapture  (Just WhiteQueen) possibleCapture  = (isBlack board (possibleCapture !! 0)) && (isEmpty board (possibleCapture !! 1))  
    isCapture  (Just BlackQueen) possibleCapture  = (isWhite board (possibleCapture !! 0)) && (isEmpty board (possibleCapture !! 1))  
 
-
-isBlack:: Board -> Position -> Bool
-isBlack board position = 
- (fig == Just Black) || (fig == Just BlackQueen)
+getEmptyMovesForQueen:: PossibleMove -> [PossibleMove]
+getEmptyMovesForQueen move@(position,board,_) =
+  map  (\pos -> (pos,moveFigure position pos board,Move)) emptyFields  
   where
-  fig = getFigureAtPosition board position
+  emptyFields =  concat . filter  (not . null) $ map  takeWhileEmpty rawListOfLists 
+  rawListOfLists =  map (getDiagonalInDirection board position) [NorthEast,NorthWest,SouthEast,SouthWest]
+  takeWhileEmpty = takeWhile (\pos -> (getFigureAtPosition board pos) == Just Empty )
  
 
-isWhite:: Board -> Position -> Bool
-isWhite board position = 
- (fig == Just White) || (fig == Just WhiteQueen)
-  where
-  fig = getFigureAtPosition board position
- 
-
-isNonBlack :: Board -> Position -> Bool
-isNonBlack board position =
- (figure /= Just Black) && (figure /= Just BlackQueen)
+getEmptyMovesForPawn:: PossibleMove -> Maybe Field -> [PossibleMove]
+getEmptyMovesForPawn move@(position@(x,y),board,_) figure = 
+  map  (\pos -> (pos,moveFigure position pos board,Move)) emptyFields
  where
-  figure = getFigureAtPosition board position
- 
-isNonWhite :: Board -> Position -> Bool
-isNonWhite board position = 
- (figure /= Just Black) && (figure /= Just BlackQueen)
-  where  
-   figure = getFigureAtPosition board position
+  emptyFields = filter (isEmpty board) . map fromJust .
+    filter (/=Nothing) $ map (getPosition board) listOfMoves 
+  listOfMoves 
+   | figure == Just Black = [(x+1,y+1),(x-1,y+1)] 
+   | figure == Just White = [(x+1,y-1),(x-1,y-1)]
 
 
-isEmpty :: Board -> Position -> Bool
-isEmpty board position =
- figure == Just Empty
- where  figure =getFigureAtPosition board position 
-
--- list of positions after capturing  figure opposite color (only one move forward)
-getPossibleCapturesForFigure :: PossibleMove -> Maybe Field -> [PossibleMove]
-getPossibleCapturesForFigure move@(position,board) figure =
- listOfPossibleMoves
+getPossibleCapturesForPawn :: PossibleMove -> Maybe Field -> [PossibleMove]
+getPossibleCapturesForPawn move@(position@(x,y),board,_) figure =
+ map (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board,Capture)) fieldsToCapture
  where
-  filedsWithOppositeColor =  filter (\x -> not $ isEmpty board x) $ getMovesForFigure board position figure
-  listOfPositionsToCapture = filter (\pos -> isEmpty board $ getPositionAfterCapture position pos)  filedsWithOppositeColor
-  listOfPossibleMoves = map (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board)) listOfPositionsToCapture
+  fieldsToCapture = filter (\pos -> (isJust $ getPosition board pos) && filtering pos) listOfMoves
+  listOfMoves = [(x+1,y+1),(x-1,y+1), (x+1,y-1),(x-1,y-1)]
+  filtering 
+   | figure == Just Black = isWhite board 
+   | figure == Just White = isBlack board
+
+---- list of positions after capturing  figure opposite color (only one move forward)
+--getPossibleCapturesForFigure :: PossibleMove -> Maybe Field -> [PossibleMove]
+--getPossibleCapturesForFigure move@(position,board) figure =
+-- listOfPossibleMoves
+-- where
+--  filedsWithOppositeColor =  filter (\x -> not $ isEmpty board x) $ getMovesForFigure board position figure
+--  listOfPositionsToCapture = filter (\pos -> isEmpty board $ getPositionAfterCapture position pos)  filedsWithOppositeColor
+--  listOfPossibleMoves = map (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board)) listOfPositionsToCapture
 
 
   
@@ -102,26 +98,32 @@ getAllPathsInTree :: Tree a -> [[a]]
 getAllPathsInTree (Node label []) = [[label]]
 getAllPathsInTree (Node label xs) = map (label:) $ concat $ map getAllPathsInTree xs
 
-getListOfLongestCaptureSequencesForFigure :: Board -> Position -> Maybe Field -> [[PossibleMove]]
-getListOfLongestCaptureSequencesForFigure board position figure  
+getListOfLongestCaptureSequencesForFigure :: PossibleMove -> Maybe Field -> [[PossibleMove]]
+getListOfLongestCaptureSequencesForFigure startMove fig
   | maxLengthOfSequence == 1 = [] -- there is only one sequence containing only starting point so there are no capture sequences
   | otherwise =   filter (\x -> (length x) == maxLengthOfSequence) listOfPossibleCaptureSequences 
    where
-    treeOfCaptures = unfoldTree (\possibleMove -> (possibleMove, getPossibleCapturesForFigure possibleMove figure)) (position,board)
+    treeOfCaptures
+     | (fig == Just Black) || (fig == Just White) = 
+           unfoldTree (\possibleMove -> (possibleMove, getPossibleCapturesForPawn possibleMove fig)) startMove
+     | (fig == Just BlackQueen) || (fig == Just WhiteQueen) = 
+           unfoldTree (\possibleMove -> (possibleMove, getPossibleCapturesForQueen possibleMove fig)) startMove
     listOfPossibleCaptureSequences = getAllPathsInTree treeOfCaptures
     maxLengthOfSequence = maximum $ map length listOfPossibleCaptureSequences
 
 -- returns only the longest sequences of moves
 getLegalMoveSequencesForFigure :: Board -> Position -> [[PossibleMove]]
-getLegalMoveSequencesForFigure board position
- | figure == Just Empty = error "selected position is empty"
- | captureSequnces == [] = movesOnEmptyFields
+getLegalMoveSequencesForFigure  board position
+ | fig == Just Empty = error "selected position is empty"
+ | captureSequnces == [] = map (\move -> [startMove,move] ) movesOnEmptyFields
  | otherwise =  captureSequnces
   where
-   figure = getFigureAtPosition board position
-   movesOnEmptyFields = map (\pos -> (pos,moveFigure position pos board): []) $
-                       filter (isEmpty board) $ getMovesForFigure board position figure
-   captureSequnces = getListOfLongestCaptureSequencesForFigure board position figure
+   startMove = (position,board,Start)
+   fig = getFigureAtPosition board position
+   movesOnEmptyFields 
+    | (fig == Just Black) || (fig == Just White) = getEmptyMovesForPawn startMove fig
+    | (fig == Just BlackQueen) || (fig == Just WhiteQueen) = getEmptyMovesForQueen startMove
+   captureSequnces = getListOfLongestCaptureSequencesForFigure startMove fig
 
 
 

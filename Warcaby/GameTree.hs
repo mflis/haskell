@@ -12,19 +12,8 @@ type Depth = Int
 type Evaluation = Int
 
 
-
-
 -- (how many levels of tree to generate left, is Current Player Black, board
 data GameTreeNode = GameTreeNode (Depth,Bool,Board) deriving Show
-
-
---instance Eq GameTreeNode where
---  (GameTreeNode (_,_,_,evalutaion1)) ==  (GameTreeNode ( _, _, _, evalutaion2)) = evalutaion1 == evalutaion2
-
-
---instance Ord GameTreeNode where
---  (GameTreeNode( _, _, _, evalutaion1)) `compare` (GameTreeNode( _, _, _, evalutaion2)) = evalutaion1 `compare` evalutaion2
-
 
 
 getAllMoveSequncesForColor :: Board -> Bool -> [[PossibleMove]]
@@ -64,7 +53,15 @@ generateGameTreeNodes (GameTreeNode (howManyLevelsLeft,isBlack,board))
   depthToGo = howManyLevelsLeft -1
   possibleSequnces  = getAllMoveSequncesForColor board isBlack
   oppositeColor = not isBlack
-  finalBoards =   map snd $ secureLast possibleSequnces
+  finalBoards =   map snd' $ secureLast possibleSequnces
+
+
+--workariung g=to get 2nd elen form 3 elem tuple
+snd' :: (a,b,c) -> b
+snd' (a,b,c) = b
+
+thrd' :: (a,b,c) -> c
+thrd' (a,b,c) = c
 
 -- workaround to avoid exceptions on empty lists
 secureLast ::Eq a => [[a]] -> [a]
@@ -75,4 +72,62 @@ secureLast listOfLists
 
 --generateGameTree :: GameTreeNode -> Tree GameTreeNode
 generateGameTree initNode = unfoldTree (\node -> (show node, generateGameTreeNodes node)) initNode 
+
+
+
+posToStr:: Position -> String
+posToStr position@(x,y) = 
+  show number
+ where
+ number 
+  | even y = 4*(y-1) + (x+1) `div` 2
+  | otherwise = 4*(y-1) + x `div` 2
+
+convertSequenceToString :: [PossibleMove] -> String
+convertSequenceToString moveSequence =
+    concat . map (\move@(pos,_,) ->  getDelimiter move ++ posToStr pos ) moveSequence
+    where
+    typeOfMove =  thrd' (moveSequence !! 1) 
+    delimiter
+     | typeOfMove == Move = ""
+
+
+
+getDelimiter:: PossibleMove -> String
+getDelimiter move@(_,_,type)
+ | type == Start = ""
+ | type == Move = "-"
+ | type == Capture = "x"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
