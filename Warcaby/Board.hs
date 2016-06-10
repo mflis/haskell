@@ -6,6 +6,7 @@ Position,
 getFigureAtPosition,
 moveFigure,
 makeCapture,
+changeFigureInPosition,
 getPosition,
 getPositionAfterCapture,
 makeBoardFromString,
@@ -15,14 +16,13 @@ isBlack,
 isWhite,
 isNonBlack,
 isNonWhite,
-changeFigureInPosition,
 Direction(NorthEast,NorthWest,SouthEast,SouthWest)
 )
 where
 
 
 import Data.Maybe
-
+import Debug.Trace
 
 data Field = White | WhiteQueen | Black | BlackQueen | Empty  
  deriving (Eq)
@@ -94,7 +94,7 @@ changeFigureInPosition :: Position -> Maybe Field -> Board -> Board
 changeFigureInPosition  position@(x,y) newFigure (Board listOfLists) = 
  let (firstPart,secondPart) = splitAt y listOfLists   in    
  Board((trimLastElement firstPart) ++ [changedLine]  ++ secondPart)
- where changedLine =  changeFigureInLine x (listOfLists !! (y-1)) newFigure
+ where changedLine =  changeFigureInLine x (listOfLists !! (y-1))  newFigure
 
 
 --upgradeIfPossible :: Position -> Position ->Board -> Board

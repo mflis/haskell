@@ -7,13 +7,16 @@ generateGameTree
 import Board
 import Checkers
 import Data.Tree
+import Debug.Trace
 
 type Depth = Int
 type Evaluation = Int
+type Sequence = String
 
-
--- (how many levels of tree to generate left, is Current Player Black, board
-data GameTreeNode = GameTreeNode (Depth,Bool,Board) deriving Show
+-- (how many levels of tree to generate left, is Current Player
+--Black, board, string representation of moves to get from parent
+--board to this board)
+data GameTreeNode = GameTreeNode (Depth,Bool,Board,Sequence) deriving Show
 
 
 getAllMoveSequncesForColor :: Board -> Bool -> [[PossibleMove]]
@@ -46,13 +49,14 @@ onlyLognest listOfLists =
 
 
 generateGameTreeNodes :: GameTreeNode -> [GameTreeNode]
-generateGameTreeNodes (GameTreeNode (howManyLevelsLeft,isBlack,board)) 
+generateGameTreeNodes (GameTreeNode (howManyLevelsLeft,isBlack,board,_)) 
  | howManyLevelsLeft == 0 = []
- | otherwise = map  ( \board -> GameTreeNode(depthToGo,oppositeColor,board)) finalBoards 
+ | otherwise = map  ( \(board,sequence) -> GameTreeNode(depthToGo,oppositeColor,board,sequence)) $ zip finalBoards sequences 
  where
   depthToGo = howManyLevelsLeft -1
   possibleSequnces  = getAllMoveSequncesForColor board isBlack
   oppositeColor = not isBlack
+  sequences = map convertSequenceToString possibleSequnces
   finalBoards =   map snd' $ secureLast possibleSequnces
 
 
@@ -70,8 +74,8 @@ secureLast listOfLists
  | otherwise = map last listOfLists
 
 
---generateGameTree :: GameTreeNode -> Tree GameTreeNode
-generateGameTree initNode = unfoldTree (\node -> (show node, generateGameTreeNodes node)) initNode 
+generateGameTree :: GameTreeNode -> Tree String
+generateGameTree initNode = unfoldTree (\node@(GameTreeNode( dep,bl,_,seq)) -> (seq ++ "{" ++ show dep ++ "} bl:" ++ show bl,  generateGameTreeNodes node)) initNode 
 
 
 
@@ -85,25 +89,20 @@ posToStr position@(x,y) =
 
 convertSequenceToString :: [PossibleMove] -> String
 convertSequenceToString moveSequence =
-    concat . map (\move@(pos,_,) ->  getDelimiter move ++ posToStr pos ) moveSequence
-    where
-    typeOfMove =  thrd' (moveSequence !! 1) 
-    delimiter
-     | typeOfMove == Move = ""
+    concat $ map (\move@(pos,_,typeOfMove) ->  (getDelimiter typeOfMove) ++ (posToStr pos) )  moveSequence
 
 
 
-getDelimiter:: PossibleMove -> String
-getDelimiter move@(_,_,type)
- | type == Start = ""
- | type == Move = "-"
- | type == Capture = "x"
+getDelimiter:: TypeOfMove -> String
+getDelimiter Start = ""
+getDelimiter Move = "-"
+getDelimiter Capture = "x"
 
 
 
 
 
-
+testNode = GameTreeNode(2,True,multiCaptureBlack41,"")
 
 
 

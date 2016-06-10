@@ -5,7 +5,8 @@ PossibleMove,
 TypeOfMove(Start,Capture,Move),
 initBoard,
 minBoard,
-multiBlackQueenCapture44
+multiBlackQueenCapture44,
+multiCaptureBlack41
 )
 where
 
@@ -15,7 +16,7 @@ import Data.Tree
 import Data.Maybe
 import Board
 
-data TypeOfMove = Move | Capture | Start deriving Eq
+data TypeOfMove = Move | Capture | Start deriving (Eq,Show)
 
 -- positions od possible move with board after making that move
 type PossibleMove = (Position,Board,TypeOfMove)
@@ -73,9 +74,10 @@ getEmptyMovesForPawn move@(position@(x,y),board,_) figure =
 
 getPossibleCapturesForPawn :: PossibleMove -> Maybe Field -> [PossibleMove]
 getPossibleCapturesForPawn move@(position@(x,y),board,_) figure =
- map (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board,Capture)) fieldsToCapture
+ map (\pos -> (getPositionAfterCapture position pos,makeCapture position pos board,Capture))  fieldsToCapture
  where
-  fieldsToCapture = filter (\pos -> (isJust $ getPosition board pos) && filtering pos) listOfMoves
+  fieldsToCapture =  filter isFieldToJumpEmpty $ filter  filtering $ map fromJust $ filter  isJust $ map (getPosition board)  listOfMoves
+  isFieldToJumpEmpty = \pos -> getFigureAtPosition board (getPositionAfterCapture position pos) == Just Empty 
   listOfMoves = [(x+1,y+1),(x-1,y+1), (x+1,y-1),(x-1,y-1)]
   filtering 
    | figure == Just Black = isWhite board 
@@ -142,7 +144,7 @@ multiCaptureBlack41 = makeBoardFromString multiCaptureBlack41Str
 
 init2Board = makeBoardFromString "-b-b\nb-b-\n-b-b"
 
-multiBlackQueenCapture44Str = "\n--------\n--------\n--------\n---B----\n--w-w---\n--------\n--w-w---\n--------"
+multiBlackQueenCapture44Str = "\n--------\n--------\n--------\n----B---\n---w-w--\n--------\n---w-w--\n--------"
 multiBlackQueenCapture44 = makeBoardFromString multiBlackQueenCapture44Str
 
 initialBoardCapture23 = "-b-b-b-b\nb-b-b-b-\n-b-b-b-b\n--w-----\n--------\nw-w-w-w-\n---w-w-w\nw-w-w-w-"
