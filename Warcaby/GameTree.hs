@@ -1,6 +1,13 @@
 module GameTree(
 GameTreeNode(GameTreeNode),
-generateGameTree
+Sequence,
+generateGameTree,
+testNode,
+testTree,
+getAllBlackPositions,
+getAllWhitePositions,
+getAllMoveSequncesForColor,
+ convertSequenceToString 
 )where
 
 
@@ -60,7 +67,7 @@ generateGameTreeNodes (GameTreeNode (howManyLevelsLeft,isBlack,board,_))
   finalBoards =   map snd' $ secureLast possibleSequnces
 
 
---workariung g=to get 2nd elen form 3 elem tuple
+--workariund to get 2nd elen form 3 elem tuple
 snd' :: (a,b,c) -> b
 snd' (a,b,c) = b
 
@@ -74,10 +81,10 @@ secureLast listOfLists
  | otherwise = map last listOfLists
 
 
-generateGameTree :: GameTreeNode -> Tree String
-generateGameTree initNode = unfoldTree (\node@(GameTreeNode( dep,bl,_,seq)) -> (seq ++ "{" ++ show dep ++ "} bl:" ++ show bl,  generateGameTreeNodes node)) initNode 
+generateGameTree :: GameTreeNode -> Tree GameTreeNode
+generateGameTree initNode = unfoldTree (\node -> (node, generateGameTreeNodes node)) initNode 
 
-
+printNode node@(GameTreeNode( dep,bl,_,seq)) =  seq ++ "{" ++ show dep ++ "} bl:" ++ show bl
 
 posToStr:: Position -> String
 posToStr position@(x,y) = 
@@ -102,7 +109,8 @@ getDelimiter Capture = "x"
 
 
 
-testNode = GameTreeNode(2,True,multiCaptureBlack41,"")
+testNode = GameTreeNode(4,True,initBoard,"")
+testTree = generateGameTree testNode
 
 
 

@@ -14,8 +14,6 @@ getDiagonalInDirection,
 isEmpty,
 isBlack,
 isWhite,
-isNonBlack,
-isNonWhite,
 Direction(NorthEast,NorthWest,SouthEast,SouthWest)
 )
 where
@@ -61,8 +59,9 @@ instance Show Board where
  
 
 
-
+mapListOfFields :: String -> [Maybe Field]
 mapListOfFields singleLineString = map readField singleLineString
+
 makeBoardFromString :: String -> Board
 makeBoardFromString stringRepresentation = 
  Board $ map mapListOfFields (words stringRepresentation) 
@@ -97,26 +96,38 @@ changeFigureInPosition  position@(x,y) newFigure (Board listOfLists) =
  where changedLine =  changeFigureInLine x (listOfLists !! (y-1))  newFigure
 
 
---upgradeIfPossible :: Position -> Position ->Board -> Board
---upgradeIfPossible oldPosition newPosition oldBoard newBoard
--- | oldFigure == Just Black 
---where
--- oldFigure = getFigureAtPosition oldPosition oldBoard
+upgradeIfPossible :: Position -> Position ->Board -> Maybe Field
+upgradeIfPossible oldPosition newPosition board 
+ | oldFigure == Just Black && isBlackQueenPosition newPosition = Just BlackQueen
+ | oldFigure == Just White && isWhiteQueenPosition newPosition = Just WhiteQueen
+ | otherwise = oldFigure
+ where
+ oldFigure = getFigureAtPosition board oldPosition 
 
 
---isBlackQueenPosition :: Position -> Bool
---isBlackQueenPosition position = 
- 
---  where
---  rowNumber = snd position
 
+-- | otherwise = (trace ("called with" ++ show oldFigure ++ "at pos: " ++ show oldPosition ++ "and board: " ++ show board) $ Just WhiteQueen)
+
+
+isBlackQueenPosition :: Position -> Bool
+isBlackQueenPosition position = 
+ rowNumber == 8
+  where
+  rowNumber = snd position
+
+isWhiteQueenPosition :: Position -> Bool
+isWhiteQueenPosition position = 
+ rowNumber == 1
+  where
+  rowNumber = snd position
 
 
 moveFigure :: Position -> Position -> Board -> Board
 moveFigure oldPosition newPosition board = 
  let removedOldPosition = changeFigureInPosition oldPosition (Just Empty) board
- in  changeFigureInPosition newPosition oldFigure removedOldPosition
- where oldFigure = getFigureAtPosition  board oldPosition 
+ in  changeFigureInPosition newPosition maybeUpgraded removedOldPosition
+ where 
+    maybeUpgraded = upgradeIfPossible oldPosition newPosition board 
 
 
 makeCapture :: Position -> Position -> Board -> Board
@@ -169,19 +180,6 @@ isWhite board position =
   where
   fig = getFigureAtPosition board position
  
-
-isNonBlack :: Board -> Position -> Bool
-isNonBlack board position =
- (figure /= Just Black) && (figure /= Just BlackQueen)
- where
-  figure = getFigureAtPosition board position
- 
-isNonWhite :: Board -> Position -> Bool
-isNonWhite board position = 
- (figure /= Just Black) && (figure /= Just BlackQueen)
-  where  
-   figure = getFigureAtPosition board position
-
 
 isEmpty :: Board -> Position -> Bool
 isEmpty board position =

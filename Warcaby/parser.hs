@@ -56,6 +56,11 @@ play i = do
     Left x -> fail $ show x
   putStrLn "11-15" >> hFlush stdout -- konkretny ruch trzeba wygenerowac
 
+getSeq seq =
+  case parse parsePDN "sPDN err" seq of
+    Right move -> return move 
+    Left x -> fail $ show x
+
 
 doPlay :: Game ()
 doPlay = getContents >>= (mapM_ play) . lines

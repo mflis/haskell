@@ -24,19 +24,6 @@ type PossibleMove = (Position,Board,TypeOfMove)
 getLegalPositions rows = 
  [(c, d) | c <- [1..8], d <- rows, or [and [odd c, even d], and [even c, odd d]] ]
 
-getMovesForFigure::Board -> Position -> Maybe Field -> [Position]
-getMovesForFigure board position@(x,y) figure  =
- filter (filtering board) . map fromJust .
-    filter (/=Nothing) $ map (getPosition board) listOfMoves 
- where 
-  filtering 
-   | figure == Just Black || figure == Just BlackQueen = isNonBlack
-   | figure == Just White || figure == Just WhiteQueen = isNonWhite
-  listOfMoves 
-   | figure == Just Black = [(x+1,y+1),(x-1,y+1)] 
-   | figure == Just White = [(x+1,y-1),(x-1,y-1)]
-   | otherwise =   [(x+1,y-1),(x-1,y-1),(x+1,y+1),(x-1,y+1)] -- white or black Queen
-
 
 
 -- list of positions after capturing  figure opposite color (only one move forward)
@@ -58,7 +45,7 @@ getEmptyMovesForQueen move@(position,board,_) =
   where
   emptyFields =  concat . filter  (not . null) $ map  takeWhileEmpty rawListOfLists 
   rawListOfLists =  map (getDiagonalInDirection board position) [NorthEast,NorthWest,SouthEast,SouthWest]
-  takeWhileEmpty = takeWhile (\pos -> (getFigureAtPosition board pos) == Just Empty )
+  takeWhileEmpty = takeWhile (isEmpty board)
  
 
 getEmptyMovesForPawn:: PossibleMove -> Maybe Field -> [PossibleMove]
@@ -66,7 +53,7 @@ getEmptyMovesForPawn move@(position@(x,y),board,_) figure =
   map  (\pos -> (pos,moveFigure position pos board,Move)) emptyFields
  where
   emptyFields = filter (isEmpty board) . map fromJust .
-    filter (/=Nothing) $ map (getPosition board) listOfMoves 
+    filter isJust $ map (getPosition board) listOfMoves 
   listOfMoves 
    | figure == Just Black = [(x+1,y+1),(x-1,y+1)] 
    | figure == Just White = [(x+1,y-1),(x-1,y-1)]

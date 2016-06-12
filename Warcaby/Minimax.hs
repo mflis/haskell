@@ -1,3 +1,7 @@
+module Minimax(
+minimax
+)where
+
 import Board
 import Checkers
 import GameTree
@@ -22,17 +26,17 @@ getFigureWeight figure
  | figure == Just Empty = 0
 
 
-minimax :: Tree GameTreeNode  -> Bool -> Board
 minimax gameTree@(Node _ children) isBlack  =
- snd $ maximumBy (comparing $ fst) movesWithEvalutaion
+  maximumBy (comparing $ fst') movesWithEvalutaion
  where 
-  movesWithEvalutaion = map (\gameNode@(Node (GameTreeNode (_,_,board) ) _ ) -> (minimizeTree isBlack gameNode,board )) children
+  movesWithEvalutaion = map (\gameNode@(Node (GameTreeNode (_,_,board,seq) ) _ ) -> (minimizeTree isBlack gameNode,board, seq )) children
 
 
+fst' (a,b,c) = a
 
 maximizeTree :: Bool ->Tree GameTreeNode ->  Int
 
-maximizeTree  isRootBlack (Node game@(GameTreeNode (_,_,board)) [] )  = evaluateBoard board isRootBlack 
+maximizeTree  isRootBlack (Node game@(GameTreeNode (_,_,board,_)) [] )  = evaluateBoard board isRootBlack 
 
 maximizeTree isRootBlack (Node _ children)  = maximum . map (minimizeTree isRootBlack) $ children 
 
@@ -40,7 +44,7 @@ maximizeTree isRootBlack (Node _ children)  = maximum . map (minimizeTree isRoot
 
 minimizeTree :: Bool -> Tree GameTreeNode ->  Int
 
-minimizeTree isRootBlack (Node game@(GameTreeNode(_,_,board)) [] )  = evaluateBoard board isRootBlack 
+minimizeTree isRootBlack (Node game@(GameTreeNode(_,_,board,_)) [] )  = evaluateBoard board isRootBlack 
 
 minimizeTree isRootBlack (Node _ children)  = minimum . map (maximizeTree isRootBlack) $ children 
 
