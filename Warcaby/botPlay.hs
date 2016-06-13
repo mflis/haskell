@@ -3,6 +3,9 @@ import GameTree
 import  Board
 import Checkers
 import Data.Maybe
+import  Control.Monad
+
+data Win = BlackWin | WhiteWin | NoWin deriving Eq
 
 
 loop:: Board -> Bool -> Int -> IO String
@@ -21,26 +24,44 @@ loop initBoard isBlack howMany =
  tree = generateGameTree initNode
 
 
-playerVsComputer initBoard isBlack = 
-     case isWin initBoard of BlackWin -> return "White Wins"
-                             WhiteWin -> return "Black Wins"
-                             NoWin ->do
-                                putStr "Enter sequence of moves:"
-                                sequenceFromUser <-  getLine
-                                let afterMove = applyMoveFromString sequenceFromUser isBlack initBoard
-                                case afterMove of Nothing -> return "bad sequence"
-                                                  otherwise -> do 
-                                                                putStrLn $ show afterMove
-                                                                playerVsComputer (fromJust afterMove) (not isBlack)
+playerVsComputer initBoard isBlack = do
+    afterUserMove <- userMove initBoard isBlack 
+    case afterUserMove of Nothing -> if isWin initBoard /= NoWin 
+                                     then  return "the end"
+                                     else do putStrLn "bad sequence"
+                                             playerVsComputer initBoard isBlack
+                          otherwise ->   do afterCompMove <- compMove   (fromJust afterUserMove) (not isBlack) 
+                                            case afterCompMove of Nothing -> return "the end"
+                                                                  otherwise -> playerVsComputer (fromJust afterCompMove) isBlack
+                                                                                                          
                                 
- where
- (weight,boardAfterMove,sequence) = minimax tree isBlack
- initNode = GameTreeNode(4,isBlack,initBoard,"")
- tree = generateGameTree initNode
- 
+
+--userMove:: Board -> Bool -> IO (Maybe Board)
+userMove initBoard isBlack = 
+    case isWin initBoard of BlackWin -> do putStrLn "White Wins" ; return Nothing
+                            WhiteWin -> do putStrLn "Black Wins" ; return Nothing
+                            NoWin -> do
+                                        putStr $ "Black: " ++ show isBlack ++  " Enter sequence of moves:"
+                                        sequenceFromUser <-  getLine
+                                        when (sequenceFromUser == "q") (fail "bye")
+                                        let afterUserMove =  applyMoveFromString sequenceFromUser isBlack initBoard
+                                        when (afterUserMove /= Nothing) (putStr $ show $ fromJust afterUserMove)
+                                        return afterUserMove
 
 
-data Win = BlackWin | WhiteWin | NoWin
+--compMove:: Board -> Bool -> IO (Maybe Board)
+compMove initBoard isBlack = 
+    case isWin initBoard of BlackWin -> do putStrLn "White Wins" ; return Nothing
+                            WhiteWin -> do putStrLn "Black Wins" ; return Nothing
+                            NoWin ->  do let
+                                            node = GameTreeNode(4, isBlack,initBoard ,"")
+                                            tree = generateGameTree node
+                                            (weight,boardAfterCompMove,sequence) = minimax tree isBlack
+                                         putStrLn $ "Opponent move " ++ sequence
+                                         putStr $ show boardAfterCompMove
+                                         return $ Just boardAfterCompMove
+
+
 
 isWin:: Board -> Win
 isWin board 
