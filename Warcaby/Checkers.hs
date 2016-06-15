@@ -90,7 +90,7 @@ getAllPathsInTree (Node label xs) = map (label:) $ concat $ map getAllPathsInTre
 getListOfLongestCaptureSequencesForFigure :: PossibleMove -> Maybe Field -> [[PossibleMove]]
 getListOfLongestCaptureSequencesForFigure startMove fig
   | maxLengthOfSequence == 1 = [] -- there is only one sequence containing only starting point so there are no capture sequences
-  | otherwise =   filter (\x -> (length x) == maxLengthOfSequence) listOfPossibleCaptureSequences 
+  | otherwise =  map (possiblyUpgradeToQueen fig) $ filter (\x -> (length x) == maxLengthOfSequence) listOfPossibleCaptureSequences 
    where
     treeOfCaptures
      | (fig == Just Black) || (fig == Just White) = 
@@ -99,6 +99,28 @@ getListOfLongestCaptureSequencesForFigure startMove fig
            unfoldTree (\possibleMove -> (possibleMove, getPossibleCapturesForQueen possibleMove fig)) startMove
     listOfPossibleCaptureSequences = getAllPathsInTree treeOfCaptures
     maxLengthOfSequence = maximum $ map length listOfPossibleCaptureSequences
+
+
+possiblyUpgradeToQueen:: Maybe Field -> [PossibleMove] -> [PossibleMove]
+possiblyUpgradeToQueen color listOfMoves 
+ | snd lastPosition == rowOfUpgrade = upgradedSequence
+ | otherwise = listOfMoves
+ where
+ lastMove = last listOfMoves
+ lastPosition = (\(pos,_,_) -> pos) lastMove
+ lastBoard =  (\(_,board,_) -> board) lastMove
+ rowOfUpgrade 
+  | color == Just Black = 8
+  | color == Just White = 1
+  | otherwise = -66 -- when color is BlackQueen or WhiteQueen then impossible row
+ queenField 
+  | color == Just Black = Just BlackQueen
+  | color == Just White = Just WhiteQueen
+  | otherwise = Nothing 
+ upgradedBoard = changeFigureInPosition lastPosition queenField lastBoard
+ upgradedMove = (lastPosition,upgradedBoard,Capture)
+ upgradedSequence = (init listOfMoves) ++ [upgradedMove]
+
 
 -- returns only the longest sequences of moves
 getLegalMoveSequencesForFigure :: Board -> Position -> [[PossibleMove]]

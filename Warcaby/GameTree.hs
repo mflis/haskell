@@ -27,12 +27,19 @@ data GameTreeNode = GameTreeNode (Depth,Bool,Board,Sequence) deriving Show
 
 
 getAllMoveSequncesForColor :: Board -> Bool -> [[PossibleMove]]
-getAllMoveSequncesForColor board isBlack =
- onlyLognest . concat $  map  (getLegalMoveSequencesForFigure board)  positions
+getAllMoveSequncesForColor board isBlack 
+ | captures == [] =  onlyLognest  allSequences
+ | otherwise = onlyLognest  captures
  where
+ captures = filter isCaptureSequence allSequences
+ allSequences = concat $  map  (getLegalMoveSequencesForFigure board)  positions
  positions | isBlack == True =  getAllBlackPositions board
            | isBlack == False = getAllWhitePositions board
 
+
+isCaptureSequence:: [PossibleMove] -> Bool
+isCaptureSequence sequence = 
+ Capture == (thrd'  $ last sequence)
 
 getAllBlackPositions :: Board -> [Position]
 getAllBlackPositions board = filter 

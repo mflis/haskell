@@ -129,6 +129,13 @@ moveFigure oldPosition newPosition board =
  where 
     maybeUpgraded = upgradeIfPossible oldPosition newPosition board 
 
+moveFigureWithoutUpgrade :: Position -> Position -> Board -> Board
+moveFigureWithoutUpgrade oldPosition newPosition board = 
+ let removedOldPosition = changeFigureInPosition oldPosition (Just Empty) board
+ in  changeFigureInPosition newPosition olfFigure removedOldPosition
+ where 
+    olfFigure = getFigureAtPosition board oldPosition 
+
 
 makeCapture :: Position -> Position -> Board -> Board
 makeCapture startField fieldToBeCaptured board = 
@@ -137,7 +144,7 @@ makeCapture startField fieldToBeCaptured board =
    figureToMove = getFigureAtPosition board startField
    newPosition = getPositionAfterCapture startField fieldToBeCaptured
    boardWithoutCapturedPosition = changeFigureInPosition fieldToBeCaptured (Just Empty) board
-   boardAfterMove = moveFigure startField newPosition boardWithoutCapturedPosition
+   boardAfterMove = moveFigureWithoutUpgrade startField newPosition boardWithoutCapturedPosition
 
 
 
