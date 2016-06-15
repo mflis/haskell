@@ -7,7 +7,7 @@ testTree,
 getAllBlackPositions,
 getAllWhitePositions,
 getAllMoveSequncesForColor,
- convertSequenceToString 
+convertSequenceToString 
 )where
 
 
@@ -25,6 +25,8 @@ type Sequence = String
 --board to this board)
 data GameTreeNode = GameTreeNode (Depth,Bool,Board,Sequence) deriving Show
 
+---------------------------------------------------------
+----------- getting all legal move sequences for black or white player
 
 getAllMoveSequncesForColor :: Board -> Bool -> [[PossibleMove]]
 getAllMoveSequncesForColor board isBlack 
@@ -62,6 +64,9 @@ onlyLognest listOfLists =
 
 
 
+------------------------------------------------------------------------------------
+--------------------- generating game tree-------------------------------------
+
 generateGameTreeNodes :: GameTreeNode -> [GameTreeNode]
 generateGameTreeNodes (GameTreeNode (howManyLevelsLeft,isBlack,board,_)) 
  | howManyLevelsLeft == 0 = []
@@ -93,6 +98,12 @@ generateGameTree initNode = unfoldTree (\node -> (node, generateGameTreeNodes no
 
 printNode node@(GameTreeNode( dep,bl,_,seq)) =  seq ++ "{" ++ show dep ++ "} bl:" ++ show bl
 
+
+
+-------------------------------------------------------------------------------
+------------------------- conversting sequence of moves to FDN format ---------
+
+
 posToStr:: Position -> String
 posToStr position@(x,y) = 
   show number
@@ -112,9 +123,8 @@ getDelimiter Start = ""
 getDelimiter Move = "-"
 getDelimiter Capture = "x"
 
-
-
-
+--------------------------------------------
+---------------- test case --------------------
 
 testNode = GameTreeNode(4,True,initBoard,"")
 testTree = generateGameTree testNode

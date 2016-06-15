@@ -14,10 +14,11 @@ getDiagonalInDirection,
 isEmpty,
 isBlack,
 isWhite,
+isBlackQueenPosition,
+isWhiteQueenPosition,
 Direction(NorthEast,NorthWest,SouthEast,SouthWest)
 )
 where
-
 
 import Data.Maybe
 import Debug.Trace
@@ -29,10 +30,13 @@ data Board = Board [[ Maybe Field]] deriving (Eq)
 
 type Position = (Int,Int)
 
+-- used when calculating possible moves for quuen
 data Direction = NorthEast | NorthWest | SouthEast | SouthWest
 
-readField :: Char -> Maybe Field
+------------------------------------------------------------------------
+------------------------------ String <-> Board conversion -------------
 
+readField :: Char -> Maybe Field
 readField char 
  | char == 'b' = Just Black
  | char == 'B' = Just BlackQueen
@@ -67,8 +71,8 @@ makeBoardFromString stringRepresentation =
  Board $ map mapListOfFields (words stringRepresentation) 
 
 
-
---	USING !! OPERATOR LISTS ARE 0 - INDEXED
+---------------------------------------------------------------
+----------------------- manipulating board ------------------
 
 
 getFigureAtPosition ::   Board ->  Position -> Maybe Field
@@ -104,24 +108,6 @@ upgradeIfPossible oldPosition newPosition board
  where
  oldFigure = getFigureAtPosition board oldPosition 
 
-
-
--- | otherwise = (trace ("called with" ++ show oldFigure ++ "at pos: " ++ show oldPosition ++ "and board: " ++ show board) $ Just WhiteQueen)
-
-
-isBlackQueenPosition :: Position -> Bool
-isBlackQueenPosition position = 
- rowNumber == 8
-  where
-  rowNumber = snd position
-
-isWhiteQueenPosition :: Position -> Bool
-isWhiteQueenPosition position = 
- rowNumber == 1
-  where
-  rowNumber = snd position
-
-
 moveFigure :: Position -> Position -> Board -> Board
 moveFigure oldPosition newPosition board = 
  let removedOldPosition = changeFigureInPosition oldPosition (Just Empty) board
@@ -149,6 +135,10 @@ makeCapture startField fieldToBeCaptured board =
 
 
 
+
+----------------------------------------------------------
+--------------------------- accessors --------------------
+
 getPosition ::  Board -> Position  -> Maybe Position
 getPosition  board@(Board listOfLists)  position@(x,y)
  | 0 < x &&  x <= length listOfLists && 0 < y 
@@ -174,6 +164,10 @@ getDiagonalInDirection board  centerPoint@(x_pos,y_pos) direction =
 
 
 
+----------------------------------------------------------------
+------------------------------- predicates ---------------------
+
+
 isBlack:: Board -> Position -> Bool
 isBlack board position = 
  (fig == Just Black) || (fig == Just BlackQueen)
@@ -192,6 +186,20 @@ isEmpty :: Board -> Position -> Bool
 isEmpty board position =
  figure == Just Empty
  where  figure =getFigureAtPosition board position 
+
+
+
+isBlackQueenPosition :: Position -> Bool
+isBlackQueenPosition position = 
+ rowNumber == 8
+  where
+  rowNumber = snd position
+
+isWhiteQueenPosition :: Position -> Bool
+isWhiteQueenPosition position = 
+ rowNumber == 1
+  where
+  rowNumber = snd position
 
 
 

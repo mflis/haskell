@@ -10,6 +10,8 @@ import Data.Ord
 import Data.List
 import Data.Tree
 
+-------------- evaluate board for white or black player------
+------------ (result is always non-negative number) -----------
 evaluateBoard :: Board -> Bool -> Int
 evaluateBoard board@(Board listOfLists) isBlack 
  | isBlack == True = valueForBlack
@@ -24,6 +26,9 @@ getFigureWeight figure
  | figure == Just BlackQueen = 3
  | figure == Just WhiteQueen = -3
  | figure == Just Empty = 0
+
+--------------------------------------------------
+----------- minimax algorithm --------------------
 
 
 minimax gameTree@(Node _ children) isBlack  =
